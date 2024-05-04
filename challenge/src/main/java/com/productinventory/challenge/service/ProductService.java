@@ -3,6 +3,8 @@ package com.productinventory.challenge.service;
 import com.productinventory.challenge.ProductRepository;
 import com.productinventory.challenge.exceptions.ProductNotFoundException;
 import com.productinventory.challenge.model.ProductResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,69 +15,55 @@ import java.util.Optional;
 @Service
 public class ProductService {
 
-    List<ProductResponse> products = new ArrayList<>();
-
     @Autowired
     private ProductRepository productRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    public ProductService() {
-        // Initialize products with some dummy data
-        products.add(new ProductResponse(1L, "Product 1", "Description 1", 11.11, 111));
-        products.add(new ProductResponse(2L, "Product 2", "Description 2", 22.22, 222));
-        products.add(new ProductResponse(3L, "Product 3", "Description 3", 33.33, 333));
-    }
+
+    public ProductService() {}
 
     public List<ProductResponse> getAllProducts() {
+        logger.info("Retrieving all products");
         return productRepository.findAll();
     }
 
     public void addProduct(ProductResponse product) {
-        try {
-            Optional<ProductResponse> existingProduct = getProductById(product.getId());
-            if (existingProduct.isPresent()) {
-                throw new Exception("Product with ID already exists");
-            } else {
-                products.add(product);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        logger.info("Adding product: {}", product);
+
+        if (productRepository.existsById(product.getId())) {
+            logger.error("Product with ID {} already exists", product.getId());
+            throw new RuntimeException("Product with ID already exists");
         }
+        productRepository.save(product);
+        logger.info("Product added successfully");
     }
 
     public Optional<ProductResponse> getProductById(Long id) {
-        return products.stream()
-                .filter(product -> product.getId().equals(id))
-                .findFirst();
+        logger.info("Retrieving product with ID: {}", id);
+        return productRepository.findById(id);
     }
 
     public void deleteProduct(Long id)  throws ProductNotFoundException{
-        // Find the product with the specified ID
-        Optional<ProductResponse> productToDelete = getProductById(id);
-
-        // If the product is not found, throw ProductNotFoundException
-        if (productToDelete.isEmpty()) {
+        logger.info("Deleting product with ID: {}", id);
+        if (!productRepository.existsById(id)) {
+            logger.error("Product with ID {} does not exist", id);
             throw new ProductNotFoundException("Product with ID " + id + " does not exist");
         }
-
-        products.remove(products.remove(productToDelete.get()));
+        productRepository.deleteById(id);
+        logger.info("Product deleted successfully");
     }
 
     //need to write new class for updateProduct so that it should not update the ID
     public void updateProduct(Long id, ProductResponse updatedProduct) throws ProductNotFoundException {
-        // Find the product with the specified ID
-        Optional<ProductResponse> productToUpdate = getProductById(id);
-
-        // If the product is not found, throw ProductNotFoundException
-        if (productToUpdate.isEmpty()) {
+        logger.info("Updating product with ID: {}", id);
+        if (!productRepository.existsById(id)) {
+            logger.error("Product with ID {} does not exist", id);
             throw new ProductNotFoundException("Product with ID " + id + " does not exist");
         }
 
-        // Update the fields of the existing product with the new values
-        ProductResponse existingProduct = productToUpdate.get();
-        existingProduct.setName(updatedProduct.getName());
-        existingProduct.setDescription(updatedProduct.getDescription());
-        existingProduct.setPrice(updatedProduct.getPrice());
-        existingProduct.setQuantity(updatedProduct.getQuantity());
+        updatedProduct.setId(id);
 
+        productRepository.save(updatedProduct);
+        logger.info("Product updated successfully");
     }
 }
