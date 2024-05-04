@@ -1,0 +1,131 @@
+openapi: "3.0.3"
+info:
+  title: "Product Service Microservice"
+  version: "1.0.0"
+paths:
+  /products:
+    get:
+      summary: "Retrieve all products"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductResponse"
+    post:
+      summary: "Add a new product"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        '201':
+          description: "Product added successfully"
+        '400':
+          description: "Invalid request body"
+        '500':
+          description: "Internal server error"
+
+  /products/{id}:
+    get:
+      summary: "Retrieve a specific product by ID"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        '404':
+          description: "Product not found"
+
+    put:
+      summary: "Update a specific product"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        '200':
+          description: "Product updated successfully"
+        '400':
+          description: "Invalid request body"
+        '404':
+          description: "Product not found"
+        '500':
+          description: "Internal server error"
+
+    delete:
+      summary: "Delete a specific product by ID"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: "Product deleted successfully"
+        '404':
+          description: "Product not found"
+        '500':
+          description: "Internal server error"
+
+components:
+  schemas:
+    ProductResponse:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "double"
+        quantity:
+          type: "integer"
+
+    Product:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "double"
+        quantity:
+          type: "integer"
+      required:
+        - name
+        - description
+        - price
+        - quantity
