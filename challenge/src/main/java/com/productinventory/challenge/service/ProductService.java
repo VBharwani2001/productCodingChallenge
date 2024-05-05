@@ -1,14 +1,12 @@
 package com.productinventory.challenge.service;
 
-import com.productinventory.challenge.ProductRepository;
 import com.productinventory.challenge.exceptions.ProductNotFoundException;
 import com.productinventory.challenge.model.ProductResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.productinventory.challenge.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,53 +15,56 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
-    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
-
-
-    public ProductService() {}
 
     public List<ProductResponse> getAllProducts() {
-        logger.info("Retrieving all products");
         return productRepository.findAll();
     }
 
-    public void addProduct(ProductResponse product) {
-        logger.info("Adding product: {}", product);
-
-        if (productRepository.existsById(product.getId())) {
-            logger.error("Product with ID {} already exists", product.getId());
-            throw new RuntimeException("Product with ID already exists");
+    public void addProduct(ProductResponse product) throws ProductNotFoundException {
+        validateProductFields(product);
+        Optional<ProductResponse> existingProduct = getProductById(product.getId());
+        if (existingProduct.isPresent()) {
+            throw new IllegalArgumentException("Product with ID " + product.getId() + " already exists");
         }
         productRepository.save(product);
-        logger.info("Product added successfully");
     }
 
-    public Optional<ProductResponse> getProductById(Long id) {
-        logger.info("Retrieving product with ID: {}", id);
-        return productRepository.findById(id);
+
+    public Optional<ProductResponse> getProductById(Long id) throws ProductNotFoundException {
+            return productRepository.findById(id);
     }
 
-    public void deleteProduct(Long id)  throws ProductNotFoundException{
-        logger.info("Deleting product with ID: {}", id);
+    public void deleteProduct(Long id) throws ProductNotFoundException {
         if (!productRepository.existsById(id)) {
-            logger.error("Product with ID {} does not exist", id);
             throw new ProductNotFoundException("Product with ID " + id + " does not exist");
         }
         productRepository.deleteById(id);
-        logger.info("Product deleted successfully");
     }
 
-    //need to write new class for updateProduct so that it should not update the ID
     public void updateProduct(Long id, ProductResponse updatedProduct) throws ProductNotFoundException {
-        logger.info("Updating product with ID: {}", id);
+        validateProductFields(updatedProduct);
         if (!productRepository.existsById(id)) {
-            logger.error("Product with ID {} does not exist", id);
             throw new ProductNotFoundException("Product with ID " + id + " does not exist");
         }
-
-        updatedProduct.setId(id);
-
+        updatedProduct.setId(id); // Ensure ID consistency
         productRepository.save(updatedProduct);
-        logger.info("Product updated successfully");
+    }
+
+    private void validateProductFields(ProductResponse product) {
+        if (product.getId() == null) {
+            throw new IllegalArgumentException("ID cannot be null");
+        }
+        if (product.getName() == null || product.getName().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+        if (product.getDescription() == null || product.getDescription().isEmpty()) {
+            throw new IllegalArgumentException("Description cannot be empty");
+        }
+        if (product.getPrice() == 0.0) {
+            throw new IllegalArgumentException("Price cannot be empty or 0.0");
+        }
+        if (product.getQuantity() == 0) {
+            throw new IllegalArgumentException("Quantity cannot be empty");
+        }
     }
 }

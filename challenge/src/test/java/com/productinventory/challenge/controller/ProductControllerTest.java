@@ -46,19 +46,19 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void testAddProduct() {
+    public void testAddProduct() throws ProductNotFoundException {
         ProductResponse product = new ProductResponse(1L, "Product 1", "Description 1", 10.0, 100);
         ResponseEntity<String> expectedResponse = ResponseEntity.ok("Product added successfully");
 
         when(productService.getProductById(1L)).thenReturn(Optional.empty());
-        ResponseEntity<String> result = productController.addProducts(product);
+        ResponseEntity<String> result = productController.addProduct(product);
 
         assertEquals(expectedResponse, result);
         verify(productService, times(1)).addProduct(product);
     }
 
     @Test
-    public void testGetProductById() {
+    public void testGetProductById() throws ProductNotFoundException {
         Long productId = 1L;
         ProductResponse product = new ProductResponse(productId, "Product 1", "Description 1", 10.0, 100);
 

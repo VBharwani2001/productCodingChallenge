@@ -1,4 +1,4 @@
-package com.productinventory.challenge;
+package com.productinventory.challenge.repository;
 
 import com.productinventory.challenge.model.ProductResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
